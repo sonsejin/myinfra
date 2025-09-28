@@ -1,0 +1,10 @@
+# FTP
+ftp_pkg: vsftpd
+ftp_service: vsftpd
+
+ftp_user: ftpuser
+ftp_passwd: "{{ 'ftp123' | password_hash('sha512') }}"
+ftp_root: /home/ftpuser
+
+ftp_ports:
+  - 21/tcp

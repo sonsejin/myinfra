@@ -1,0 +1,13 @@
+# NTP (Chrony)
+ntp_pkg: chrony
+ntp_service: chronyd
+ntp_upstreams:
+  - 0.kr.pool.ntp.org
+
+ntp_ports:
+  - 123/udp
+
+# 내부망 허용
+lan_cidr: "192.168.10.0/24"
+ntp_allow_cidr: "{{ lan_cidr }}"
+ntp_cmdallow_cidr: "{{ lan_cidr }}"

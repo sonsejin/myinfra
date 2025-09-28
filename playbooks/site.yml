@@ -1,0 +1,47 @@
+---
+- import_playbook: common.yml
+
+# Server1 (DNS)
+- name: Configure Server1 (DNS)
+  hosts: dns
+  become: true
+  roles:
+    - mydns
+
+# Server1 (FTP)
+- name: Configure Server1 (FTP)
+  hosts: ftp
+  become: true
+  roles:
+    - myftp
+
+# Server2 (WEB)
+- name: Configure Server2 (WEB)
+  hosts: web
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+  roles:
+    - myweb
+
+# Server2 (DB)
+- name: Configure Server2 (DB)
+  hosts: db
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+  roles:
+    - mydb
+
+# Server3 (MAIL)
+- name: Configure Server3 (MAIL)
+  hosts: mail
+  become: true
+  roles:
+    - postfix
+    - dovecot
+
+# Server3 (NTP)
+- name: Configure Server3 (NTP)
+  hosts: ntp
+  become: true
+  roles:
+    - ntp

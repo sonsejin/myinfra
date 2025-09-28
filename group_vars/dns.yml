@@ -1,0 +1,27 @@
+# DNS
+dns_pkg: bind
+dns_utils: bind-utils
+dns_service: named
+dns_ports:
+  - 53/tcp
+  - 53/udp
+
+dns_domains:
+  - name: "dev.com"
+    zone_file: "dev.com.zone"
+    reverse_zone: "10.168.192.in-addr.arpa"
+    reverse_file: "dev.com.rev"
+    records:
+      - { name: "ns1",  type: "A", value: "192.168.10.11" }
+      - { name: "www",  type: "A", value: "192.168.10.12" }
+      - { name: "mail", type: "A", value: "192.168.10.13" }
+      - { name: "ntp",  type: "A", value: "192.168.10.13" }
+
+dns_search_domain: dev.com
+
+# 리졸버
+external_resolvers:
+  - 8.8.8.8
+  - 1.1.1.1
+internal_resolvers:
+  - 192.168.10.11

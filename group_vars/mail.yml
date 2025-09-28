@@ -1,0 +1,24 @@
+# MAIL (Postfix + Dovecot)
+mail_domain: dev.com
+mail_hostname: mail.dev.com
+mail_ip: 192.168.10.13
+
+mail_pkgs:
+  - postfix
+  - dovecot
+
+mail_ports:
+  - 25/tcp    # SMTP
+  - 110/tcp   # POP3
+  - 143/tcp   # IMAP
+
+mail_user: "mailuser"
+mail_password: "mail123"
+
+# Postfix
+mynetworks: "192.168.10.0/24, 127.0.0.0/8"
+postfix_message_size_limit: 10240000
+postfix_mailbox_size_limit: 1024000000
+
+# Dovecot
+dovecot_service: dovecot

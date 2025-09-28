@@ -1,0 +1,75 @@
+---
+- name: Install FTP package
+  dnf:
+    name: "{{ ftp_pkg }}"
+    state: present
+
+- name: Configure vsftpd.conf
+  copy:
+    src: vsftpd.conf 
+    dest: /etc/vsftpd/vsftpd.conf
+    owner: root
+    group: root
+    mode: '0644'
+
+# ==============================
+# 기존 FTP 계정 삭제
+# ==============================
+- name: Remove old FTP user if exists
+  user:
+    name: "{{ ftp_user }}"
+    state: absent
+    remove: yes   # 홈디렉토리/메일 스풀도 같이 삭제
+
+# ==============================
+# 새 FTP 계정 생성
+# ==============================
+- name: Create FTP user
+  user:
+    name: "{{ ftp_user }}"
+    password: "{{ ftp_passwd }}"
+    state: present
+    shell: /bin/bash
+    create_home: yes
+
+- name: Ensure FTP root directory exists
+  file:
+    path: "{{ ftp_root }}"
+    state: directory
+    owner: "{{ ftp_user }}"
+    group: "{{ ftp_user }}"
+    mode: '0755'
+
+# ==============================
+# 방화벽 설치 및 기동
+# ==============================
+- name: Ensure firewalld installed
+  dnf:
+    name: firewalld
+    state: present
+
+- name: Ensure firewalld running and enabled
+  systemd:
+    name: firewalld
+    state: started
+    enabled: true
+
+# ==============================
+# FTP 포트 개방
+# ==============================
+- name: Open FTP ports
+  ansible.posix.firewalld:
+    port: "{{ item }}"
+    permanent: true
+    immediate: true
+    state: enabled
+  loop: "{{ ftp_ports }}"
+
+# ==============================
+# FTP 서비스 기동
+# ==============================
+- name: Enable & Start FTP service
+  systemd:
+    name: "{{ ftp_service }}"
+    state: started
+    enabled: true

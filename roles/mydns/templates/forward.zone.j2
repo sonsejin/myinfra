@@ -1,0 +1,15 @@
+$TTL    1
+@   IN  SOA ns1.{{ item.name }}. root.{{ item.name }}. (
+        10      ; Serial
+        1H      ; Refresh
+        15M     ; Retry
+        1W      ; Expire
+        1D )    ; Minimum
+
+    IN  NS  ns1.{{ item.name }}.
+
+{% for rec in item.records %}
+{% if rec.type == "A" %}
+{{ rec.name }}   IN  A   {{ rec.value }}
+{% endif %}
+{% endfor %}

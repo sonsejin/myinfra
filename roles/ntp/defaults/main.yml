@@ -1,0 +1,16 @@
+ntp_upstreams:
+  - 0.kr.pool.ntp.org
+  - 1.kr.pool.ntp.org
+  - 2.kr.pool.ntp.org
+  - 3.kr.pool.ntp.org
+
+# LAN 허용 대역(기본은 앞서 쓰던 변수)
+ntp_allow_cidr: "{{ lan_cidr | default('192.168.10.0/24') }}"
+
+# 원격 chronyc 진단 허용(원치 않으면 null)
+ntp_cmdallow_cidr: "{{ ntp_allow_cidr }}"
+
+# 오프라인일 때 로컬 클럭 광고하고 싶으면 숫자 넣기(예: 10). 사용 안 하면 null.
+ntp_local_stratum: null
+
+ntp_service: chronyd

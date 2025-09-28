@@ -1,0 +1,109 @@
+- name: Install Postfix
+  ansible.builtin.dnf:
+    name: "{{ postfix_packages }}"
+    state: present
+
+- name: Ensure TLS directories exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "{{ '0700' if item.endswith('/private') else '0755' }}"
+  loop:
+    - /etc/pki/tls/certs
+    - /etc/pki/tls/private
+
+- name: Generate self-signed cert for Postfix (if missing)
+  ansible.builtin.command:
+    cmd: >
+      openssl req -new -x509 -days 365 -nodes
+      -subj "/CN={{ mail_hostname }}"
+      -out {{ postfix_tls_cert_file }}
+      -keyout {{ postfix_tls_key_file }}
+  args:
+    creates: "{{ postfix_tls_cert_file }}"
+  notify: Restart Postfix
+
+- name: Secure key permissions
+  ansible.builtin.file:
+    path: "{{ postfix_tls_key_file }}"
+    owner: root
+    group: root
+    mode: '0600'
+
+- name: Deploy /etc/postfix/main.cf
+  ansible.builtin.template:
+    src: main.cf.j2
+    dest: /etc/postfix/main.cf
+    mode: '0644'
+  notify: Restart Postfix
+
+- name: Deploy /etc/postfix/master.cf
+  ansible.builtin.template:
+    src: master.cf.j2
+    dest: /etc/postfix/master.cf
+    mode: '0644'
+  notify: Restart Postfix
+
+# 설정 오류를 조기에 잡기
+- name: Validate Postfix configuration (postfix check)
+  ansible.builtin.command: postfix check
+  register: postfix_chk
+  changed_when: false
+  failed_when: postfix_chk.rc != 0
+
+# (선택) 여기서 바로 핸들러 적용해서 재시작하고 싶으면 주석 해제
+# - meta: flush_handlers
+
+# 표준 권한 정렬( maildrop/public/postdrop setgid 복구 )
+- name: Normalize Postfix permissions (vendor defaults)
+  ansible.builtin.command: postfix set-permissions
+  register: setperm
+  changed_when: false
+  failed_when: >
+    setperm.rc != 0
+    and (setperm.stderr is not search('No such file or directory'))
+    and (setperm.stderr is not search('usr/local/man'))
+
+- name: Ensure Postfix enabled & started
+  ansible.builtin.service:
+    name: "{{ postfix_service }}"
+    state: started
+    enabled: true
+
+- name: Ensure firewalld is installed
+  ansible.builtin.dnf:
+    name: firewalld
+    state: present
+
+- name: Ensure firewalld is running and enabled
+  ansible.builtin.service:
+    name: firewalld
+    state: started
+    enabled: true
+
+# 서비스명으로 먼저 열고, 실패하면 포트로 여는 안전한 패턴
+- name: Open SMTP-related services (firewalld)
+  block:
+    - name: Open by service names
+      ansible.posix.firewalld:
+        service: "{{ item }}"
+        permanent: true
+        state: enabled
+        immediate: true
+      loop:
+        - smtp
+        - smtp-submission
+        - smtps
+  rescue:
+    - name: "Fallback: open by ports"
+      ansible.posix.firewalld:
+        port: "{{ item }}"
+        permanent: true
+        state: enabled
+        immediate: true
+      loop:
+        - 25/tcp
+        - 587/tcp
+        - 465/tcp

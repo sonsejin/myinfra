@@ -1,0 +1,9 @@
+postfix_packages: [ postfix, s-nail ]
+postfix_service: postfix
+postfix_message_size_limit: 10240000
+postfix_mailbox_size_limit: 1024000000
+
+# TLS 경로(자체 서명 인증서 사용)
+postfix_tls_cert_file: /etc/pki/tls/certs/postfix.pem
+postfix_tls_key_file:  /etc/pki/tls/private/postfix.key
+

@@ -1,0 +1,62 @@
+---
+# /etc/hosts
+- name: Distribute /etc/hosts to all servers
+  hosts: all
+  become: true
+  tasks:
+    - name: Deploy /etc/hosts
+      template:
+        src: roles/mydns/templates/hosts.j2
+        dest: /etc/hosts
+        owner: root
+        group: root
+        mode: '0644'
+
+# server1 → 외부 DNS
+- name: Configure resolv.conf on server1 (external DNS)
+  hosts: dnsftp
+  become: true
+  tasks:
+    - name: resolv.conf (external)
+      template:
+        src: roles/mydns/templates/resolv.conf.j2
+        dest: /etc/resolv.conf
+        owner: root
+        group: root
+        mode: '0644'
+      vars:
+        nameservers: "{{ external_resolvers }}"
+        search_domain: "{{ dns_search_domain }}"
+
+# server2/3 → server1 내부 DNS
+- name: Configure resolv.conf on server2 and server3 (internal DNS)
+  hosts: webdb,mailntp
+  become: true
+  tasks:
+    - name: resolv.conf (internal -> server1)
+      template:
+        src: roles/mydns/templates/resolv.conf.j2
+        dest: /etc/resolv.conf
+        owner: root
+        group: root
+        mode: '0644'
+      vars:
+        nameservers: "{{ internal_resolvers }}"
+        search_domain: "{{ dns_search_domain }}"
+
+
+# SELinux Permissive 설정
+- name: Apply common configuration
+  hosts: all
+  become: true
+  tasks:
+    - name: Ensure SELinux is in permissive mode (runtime)
+      command: setenforce 0
+      when: ansible_selinux.status == "enabled"
+      ignore_errors: true
+
+    - name: Ensure SELinux is in permissive mode (config file)
+      replace:
+        path: /etc/selinux/config
+        regexp: '^SELINUX=.*'
+        replace: 'SELINUX=permissive'

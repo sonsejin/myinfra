@@ -1,0 +1,23 @@
+# /etc/chrony.conf (managed by Ansible)
+# Upstream servers
+{% for s in ntp_upstreams %}
+pool {{ s }} iburst
+{% endfor %}
+
+driftfile /var/lib/chrony/drift
+rtcsync
+makestep 1.0 3
+logdir /var/log/chrony
+
+# Serve time to LAN
+allow {{ ntp_allow_cidr }}
+
+{% if ntp_cmdallow_cidr %}
+# Allow remote chronyc commands from LAN (for verify)
+cmdallow {{ ntp_cmdallow_cidr }}
+{% endif %}
+
+{% if ntp_local_stratum %}
+# Use local clock if no sources reachable (island mode)
+local stratum {{ ntp_local_stratum }}
+{% endif %}

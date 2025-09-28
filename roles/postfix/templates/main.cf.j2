@@ -1,0 +1,31 @@
+myhostname = {{ mail_hostname }}
+mydomain = {{ mail_domain }}
+myorigin = $mydomain
+inet_interfaces = all
+inet_protocols = ipv4
+mydestination = $myhostname, localhost.$mydomain, localhost, $mydomain
+mynetworks = {{ mynetworks }}
+smtpd_banner = $myhostname ESMTP
+
+message_size_limit = {{ postfix_message_size_limit }}
+mailbox_size_limit = {{ postfix_mailbox_size_limit }}
+
+# TLS for SMTP/Submission
+smtpd_tls_security_level = may
+smtpd_tls_cert_file = {{ postfix_tls_cert_file }}
+smtpd_tls_key_file  = {{ postfix_tls_key_file }}
+smtpd_tls_loglevel = 1
+smtpd_tls_received_header = yes
+
+
+# SMTP AUTH via Dovecot
+smtpd_sasl_type = dovecot
+smtpd_sasl_path = private/auth
+smtpd_sasl_auth_enable = yes
+smtpd_sasl_security_options = noanonymous
+smtpd_recipient_restrictions =
+  permit_mynetworks,
+  permit_auth_destination,
+  permit_sasl_authenticated,
+  reject
+

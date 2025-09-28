@@ -1,0 +1,21 @@
+[dns]
+dnsftp ansible_host=192.168.10.11
+
+[ftp]
+dnsftp ansible_host=192.168.10.11
+
+[web]
+webdb ansible_host=192.168.10.12
+
+[db]
+webdb ansible_host=192.168.10.12
+
+[mail]
+mailntp ansible_host=192.168.10.13
+
+[ntp]
+mailntp ansible_host=192.168.10.13
+
+[all:vars]
+ansible_become=true
+ansible_become_method=sudo

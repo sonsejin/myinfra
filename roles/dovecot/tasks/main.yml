@@ -1,0 +1,78 @@
+- name: Install Dovecot
+  ansible.builtin.dnf:
+    name: dovecot
+    state: present
+
+- name: Ensure self-signed cert exists
+  ansible.builtin.command:
+    cmd: >
+      openssl req -new -x509 -days 365 -nodes
+      -subj "/CN={{ mail_hostname }}"
+      -out /etc/pki/dovecot/certs/dovecot.pem
+      -keyout /etc/pki/dovecot/private/dovecot.key
+  args:
+    creates: /etc/pki/dovecot/certs/dovecot.pem
+  notify: Restart Dovecot
+
+- name: Ensure postfix private dir exists
+  ansible.builtin.file:
+    path: /var/spool/postfix/private
+    state: directory
+    owner: postfix
+    group: postfix
+    mode: '0750'
+
+- name: Restore SELinux contexts on postfix spool
+  ansible.builtin.command: restorecon -RF /var/spool/postfix
+  changed_when: false
+
+
+- name: Deploy Dovecot configs
+  ansible.builtin.template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    mode: '0644'
+  loop:
+    - { src: "dovecot.conf.j2", dest: "/etc/dovecot/dovecot.conf" }
+    - { src: "10-auth.conf.j2",  dest: "/etc/dovecot/conf.d/10-auth.conf" }
+    - { src: "10-mail.conf.j2",  dest: "/etc/dovecot/conf.d/10-mail.conf" }
+    - { src: "10-master.conf.j2",dest: "/etc/dovecot/conf.d/10-master.conf" }
+    - { src: "10-ssl.conf.j2",   dest: "/etc/dovecot/conf.d/10-ssl.conf" }
+  notify: Restart Dovecot
+
+- name: Enable & start Dovecot
+  ansible.builtin.service:
+    name: dovecot
+    state: started
+    enabled: true
+
+- name: Ensure firewalld is installed
+  ansible.builtin.dnf:
+    name: firewalld
+    state: present
+
+- name: Ensure firewalld is running and enabled
+  ansible.builtin.service:
+    name: firewalld
+    state: started
+    enabled: true
+
+- name: Open firewall for POP3/IMAP
+  ansible.builtin.firewalld:
+    service: "{{ item }}"
+    permanent: true
+    state: enabled
+    immediate: true
+  loop: [ pop3, pop3s, imap, imaps ]
+
+- name: Create mail user
+  ansible.builtin.user:
+    name: mailuser
+    password: "{{ 'soldesk1.' | password_hash('sha512') }}"
+    shell: /sbin/nologin
+    create_home: yes
+
+- name: Ensure Maildir exists
+  ansible.builtin.command: "maildirmake.dovecot /home/mailuser/Maildir"
+  args:
+    creates: /home/mailuser/Maildir

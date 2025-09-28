@@ -1,0 +1,98 @@
+---
+# 1. DNS 패키지 설치
+- name: Install DNS packages
+  dnf:
+    name:
+      - "{{ dns_pkg }}"
+      - "{{ dns_utils }}"
+    state: present
+
+# 2. named.conf 배포
+- name: Deploy named.conf
+  template:
+    src: named.conf.j2
+    dest: /etc/named.conf
+    owner: root
+    group: named
+    mode: '0640'
+
+# 3. Forward zone 파일 배포
+- name: Deploy forward zone files
+  template:
+    src: forward.zone.j2
+    dest: "/var/named/{{ item.zone_file }}"
+    owner: root
+    group: named
+    mode: '0644'
+  loop: "{{ dns_domains }}"
+
+# 4. Reverse zone 파일 배포
+- name: Deploy reverse zone files
+  template:
+    src: reverse.zone.j2
+    dest: "/var/named/{{ item.reverse_file }}"
+    owner: root
+    group: named
+    mode: '0644'
+  loop: "{{ dns_domains }}"
+
+# 5. /var/named 권한 보장
+- name: Ensure zone file ownership
+  file:
+    path: /var/named
+    owner: root
+    group: named
+    recurse: yes
+
+# 6. /var/named/data 디렉터리 생성 (logging 용도)
+- name: Ensure /var/named/data directory exists
+  file:
+    path: /var/named/data
+    state: directory
+    owner: named
+    group: named
+    mode: '0755'
+
+# 7. SELinux 컨텍스트 복구
+- name: Restore SELinux context for /var/named
+  command: restorecon -Rv /var/named
+  changed_when: false
+  
+# 7-1. named.run 파일 소유권 보장
+- name: Ensure /var/named/data/named.run ownership
+  file:
+    path: /var/named/data/named.run
+    state: touch
+    owner: named
+    group: named
+    mode: '0644'
+
+
+# 8. firewalld 설치
+- name: Ensure firewalld installed
+  dnf:
+    name: firewalld
+    state: present
+
+# 9. firewalld 실행
+- name: Ensure firewalld running and enabled
+  systemd:
+    name: firewalld
+    state: started
+    enabled: true
+
+# 10. DNS 포트 열기
+- name: Open DNS firewall ports
+  ansible.posix.firewalld:
+    port: "{{ item }}"
+    permanent: true
+    immediate: true
+    state: enabled
+  loop: "{{ dns_ports }}"
+
+# 11. named 서비스 실행
+- name: Enable & Start DNS service
+  systemd:
+    name: "{{ dns_service }}"
+    state: started
+    enabled: true

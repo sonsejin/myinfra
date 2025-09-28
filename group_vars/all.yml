@@ -1,0 +1,16 @@
+# 모든 서버 공통
+
+# /etc/hosts 엔트리
+hosts_entries:
+  - { ip: "192.168.10.11", name: "server1", alias: "dnsftp" }
+  - { ip: "192.168.10.12", name: "server2", alias: "webdb" }
+  - { ip: "192.168.10.13", name: "server3", alias: "mailntp" }
+
+dns_search_domain: dev.com
+
+external_resolvers:
+  - 8.8.8.8
+  - 1.1.1.1
+
+internal_resolvers:
+  - 192.168.10.11

@@ -1,0 +1,39 @@
+options {
+    listen-on port 53 { any; };
+    allow-query     { any; };
+    recursion yes;
+
+    forwarders {
+        {% for ns in external_resolvers %}
+        {{ ns }};
+        {% endfor %}
+    };
+
+    dnssec-validation yes;
+    directory "/var/named";
+};
+
+logging {
+    channel default_debug {
+        file "data/named.run";
+        severity dynamic;
+    };
+};
+
+# 정방향 존 설정
+{% for z in dns_domains %}
+zone "{{ z.name }}" IN {
+    type master;
+    file "/var/named/{{ z.zone_file }}";
+    allow-update { none; };
+};
+{% endfor %}
+
+# 역방향 존 설정
+{% for z in dns_domains %}
+zone "{{ z.reverse_zone }}" IN {
+    type master;
+    file "/var/named/{{ z.reverse_file }}";
+    allow-update { none; };
+};
+{% endfor %}

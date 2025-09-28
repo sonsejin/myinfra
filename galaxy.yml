@@ -1,16 +1,21 @@
-namespace: sonsejin         
-name: infra              
+namespace: sonsejin
+name: infra
 version: 1.0.0
 readme: README.md
 authors:
-  - "Son Sejin <your_email@example.com>"
-description: "Infra setup with DNS, FTP, Web, DB, Mail, NTP roles"
+  - "sonsejin <sonsejin@users.noreply.github.com>"
+description: "Ansible roles for infra services (DNS, FTP, WEB, DB, MAIL, NTP)"
 license: MIT
 tags:
+  - infra
   - dns
   - ftp
   - web
   - db
   - mail
   - ntp
-repository: "https://github.com/sonsejin/ansible-infra"
+dependencies: {}
+repository: "https://github.com/sonsejin/myinfra"
+documentation: "https://github.com/sonsejin/myinfra/blob/main/README.md"
+homepage: "https://github.com/sonsejin/myinfra"
+issues: "https://github.com/sonsejin/myinfra/issues"

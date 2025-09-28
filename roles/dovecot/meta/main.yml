@@ -1,0 +1,15 @@
+---
+galaxy_info:
+  author: "sonsejin"
+  description: "Dovecot 메일 서버 역할 (IMAP/POP3)"
+  company: "개인 프로젝트"
+  license: MIT
+  min_ansible_version: 2.9
+  platforms:
+    - name: EL
+      versions:
+        - 9
+  galaxy_tags:
+    - mail
+    - dovecot
+dependencies: []

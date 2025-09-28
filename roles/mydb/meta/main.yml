@@ -1,0 +1,15 @@
+---
+galaxy_info:
+  author: "sonsejin"
+  description: "DB 서버 구성 역할"
+  company: "개인 프로젝트"
+  license: MIT
+  min_ansible_version: 2.9
+  platforms:
+    - name: EL
+      versions:
+        - 9
+  galaxy_tags:
+    - db
+    - mariadb
+dependencies: []
